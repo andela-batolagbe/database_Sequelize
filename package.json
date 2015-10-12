@@ -1,0 +1,14 @@
+{
+  "name": "database_Sequelize",
+  "version": "0.0.0",
+  "scripts": {
+    "test": "jasmine-node test/documentManagerSpec.js --captureExceptions --forceexit"
+  },
+  "dependencies": {
+    "async": "^1.4.2",
+    "jasmine-node": "latest",
+    "mysql": "latest",
+    "sequelize": "^3.3.2",
+    "sequelize-cli": "^1.7.1"
+  }
+}
