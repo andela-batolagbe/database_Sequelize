@@ -358,8 +358,8 @@ exports.dropDocument = function() {
 };
 
 //exports.dropRole();
-exports.getAllRoles(function(params) {
-  return params;
-});
+// exports.getAllRoles(function(params) {
+//   return params;
+// });
 //createUser('John', 'Sheyman', 'regular');
 //exports.createDocument('sweet potato', 'admin', 'Atolagbe', 'Bisoye');
