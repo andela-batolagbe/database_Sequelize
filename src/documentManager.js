@@ -76,17 +76,6 @@ exports.userModel = User;
 exports.roleModel = Role;
 exports.documentModel = Document;
 
-
-var response = function(data) {
-  var dataList = [];
-  dataNum = data.length;
-  for (var i = 0; i < dataNum; i++) {
-    dataList.push(data[i].dataValues);
-  }
-  console.log(dataList);
-  return dataList;
-};
-
 /**
  * [function to create new user]
  * @param  {string} first [user firstname]
@@ -95,31 +84,37 @@ var response = function(data) {
  * @return {string}       [confirmation message if successful]
  */
 exports.createUser = function(first, last, role) {
-  Role.findOrCreate({
-    where: {
-      title: role
-    }
-  }).then(function() {
-    User.findOne({
+  if (!role) {
+    return "Invalid role";
+  } else {
+    Role.findOrCreate({
       where: {
-        firstname: first,
-        lastname: last
+        title: role
       }
-    }).then(function(user) {
-      if (!user) {
-        User.create({
+    }).then(function() {
+      User.findOne({
+        where: {
           firstname: first,
-          lastname: last,
-          role: role
-        });
-        return 'User created';
-      } else {
-        return "User already exist";
-      }
+          lastname: last
+        }
+      }).then(function(user) {
+        if (!user) {
+          if (!first || !last) {
+            return "Invalid, firstname or lastname";
+          } else {
+            User.create({
+              firstname: first,
+              lastname: last,
+              role: role
+            });
+            return 'User created';
+          }
+        } else {
+          return "User already exist";
+        }
+      });
     });
-  }).catch(function(err) {
-    console.log(err);
-  });
+  }
 };
 
 /**
@@ -128,12 +123,8 @@ exports.createUser = function(first, last, role) {
  */
 exports.getAllUsers = function(callback) {
 
-  User.findAll().then(function(users) {
+  return User.findAll();
 
-    response(users);
-  }).catch(function(err) {
-    response(err);
-  });
 };
 
 /**
@@ -146,7 +137,7 @@ exports.getAllUsers = function(callback) {
 exports.getOneUser = function(name) {
   var theUser,
     nameList = name.split(' ');
-  User.findOne({
+  return User.findOne({
     where: {
       $or: [{
         firstname: name
@@ -161,20 +152,7 @@ exports.getOneUser = function(name) {
       }, {
         lastname: nameList[1]
       }]
-
     }
-  }).then(function(user) {
-
-    if (!user) {
-      return 'User not found';
-    } else {
-      theUser = user.get({
-        plain: true
-      });
-      return theUser;
-    }
-  }).catch(function(err) {
-    return err;
   });
 };
 
@@ -198,14 +176,9 @@ exports.addRole = function(role) {
  * @return {JSON} [list of all roles]
  */
 
-exports.getAllRoles = function(callback) {
+exports.getAllRoles = function() {
+  return Role.findAll();
 
-  Role.findAll().then(function(roles) {
-    callback(
-      response(roles));
-  }).catch(function(err) {
-    callback(err);
-  });
 };
 
 /**
@@ -219,11 +192,7 @@ exports.getAllDocuments = function(limit, res) {
   return Document.findAll({
     order: '"createdAt" DESC',
     limit: limit,
-    attributes: ['content', 'created_by', 'permitted', 'dateCreated'],
-  }).then(function(documents) {
-    response(documents);
-  }).catch(function(err) {
-    response(err);
+    attributes: ['content', 'permitted', 'dateCreated'],
   });
 
 };
@@ -237,11 +206,14 @@ exports.getAllDocuments = function(limit, res) {
  * @return {String}                  [confirmation message if successful]
  */
 exports.createDocument = function(content, authorizedViewer) {
-  var currentDate = new Date();
-  var year = currentDate.getFullYear(),
-    month = currentDate.getMonth() + 1,
-    day = currentDate.getDay() + 4,
-    createdDate = year + '-' + month + '-' + day;
+
+  var createDate = new Date();
+
+  var year = createDate.getFullYear(),
+    month = createDate.getMonth() + 1,
+    day = createDate.getDate();
+  var date = year + '-' + month + '-' + day;
+
   Role.findOrCreate({
     where: {
       title: authorizedViewer
@@ -251,7 +223,7 @@ exports.createDocument = function(content, authorizedViewer) {
     Document.create({
       content: content,
       permitted: authorizedViewer,
-      dateCreated: createdDate
+      dateCreated: date
     });
   }).then(function() {
     return 'document successfully created';
@@ -268,23 +240,14 @@ exports.createDocument = function(content, authorizedViewer) {
  * @return {[JSON]}      [list of documents that can be accessed by that role]
  */
 exports.getAllDocumentsByRole = function(role, limit) {
-  Document.findAll({
+  return Document.findAll({
     where: {
       permitted: role
     },
-    attributes: ['content', 'created_by', 'permitted', 'dateCreated'],
+    attributes: ['content', 'permitted', 'dateCreated'],
     order: 'createdAt DESC',
     limit: limit
-  }).then(function(documents) {
-    if (!documents) {
-      return 'No documents can be accessed by this role';
-    } else {
-      response(documents);
-    }
-  }).catch(function(err) {
-    response(err);
   });
-
 };
 
 /**
@@ -301,23 +264,15 @@ exports.getAllDocumentsByDate = function(date, limit) {
   var dateValue = new Date(date);
   var year = dateValue.getFullYear(),
     month = dateValue.getMonth() + 1,
-    day = dateValue.getDay() + 4;
+    day = dateValue.getDate();
   var actualDate = year + '-' + month + '-' + day;
-  Document.findAll({
+  return Document.findAll({
     where: {
       dateCreated: actualDate
     },
-    attributes: ['content', 'created_by', 'permitted', 'dateCreated'],
+    attributes: ['content', 'permitted', 'dateCreated'],
     order: 'createdAt DESC',
     limit: limit
-  }).then(function(documents) {
-    if (!documents) {
-      return 'No document was created on this day';
-    } else {
-      response(documents);
-    }
-  }).catch(function(err) {
-    response(err);
   });
 };
 
@@ -328,10 +283,16 @@ exports.getAllDocumentsByDate = function(date, limit) {
  * @return {no return} 
  */
 exports.dropUser = function() {
-  sequelize.query('SET FOREIGN_KEY_CHECKS = 0')
-    .then(User.destroy({
-      truncate: true
-    })).catch(function(err) {
+  User.findAll()
+    .then(function(users) {
+      for (var user in users) {
+        User.destroy({
+          where: {
+            firstname: users[user].dataValue.firstname
+          }
+        });
+      }
+    }).catch(function(err) {
       return err;
     });
 
@@ -339,27 +300,38 @@ exports.dropUser = function() {
 
 
 exports.dropRole = function() {
-  sequelize.query('SET FOREIGN_KEY_CHECKS = 0')
-    .then(Role.destroy({
-      truncate: true
-    })).catch(function(err) {
+  Role.findAll()
+    .then(function(roles) {
+      for (var role in roles) {
+        Role.destroy({
+          where: {
+            title: roles[role].dataValue.title
+          }
+        });
+      }
+    }).catch(function(err) {
       return err;
     });
 
 };
 
 exports.dropDocument = function() {
-  sequelize.query('SET FOREIGN_KEY_CHECKS = 0')
-    .then(Document.destroy({
-      truncate: true
-    })).catch(function(err) {
+  Document.findAll()
+    .then(function(docs) {
+      for (var doc in docs) {
+        Document.destroy({
+          where: {
+            content: docs[doc].dataValue.content
+          }
+        });
+      }
+    }).catch(function(err) {
       return err;
     });
+
 };
 
 //exports.dropRole();
-// exports.getAllRoles(function(params) {
-//   return params;
-// });
-//createUser('John', 'Sheyman', 'regular');
-//exports.createDocument('sweet potato', 'admin', 'Atolagbe', 'Bisoye');
+//exports.getOneUser('Sheyman');
+//exports.createUser('John', 'Sheyman', 'regular');
+//exports.createDocument('sweet potato', 'admin');
