@@ -6,6 +6,17 @@ var data = fs.readFileSync(__dirname + '/fixtures.json');
 
 var testData = JSON.parse(data);
 
+var response = function(data) {
+  var dataList = [];
+  dataNum = data.length;
+  for (var i = 0; i < dataNum; i++) {
+    dataList.push(data[i].dataValues);
+  }
+
+  return dataList;
+};
+
+
 describe('User', function() {
 
   var users = testData[0].Users;
@@ -28,7 +39,7 @@ describe('User', function() {
     done();
   });
 
-  xit('is unique', function(done) {
+  it('is unique', function(done) {
 
     documentManager
       .userModel.create({
@@ -39,23 +50,26 @@ describe('User', function() {
         expect(err).toBeDefined();
         expect(err.hasOwnProperty('errors')).toEqual(true);
         expect(err.errors[0].type).toEqual('unique violation');
-        done();
       });
+    done();
   });
 
-  xit('has a defined role', function(done) {
+  it('has a defined role', function(done) {
 
     var noRole = documentManager.createUser('Simon', 'John', undefined);
-    var getOne = documentManager.getOneUser(users[0].firstname);
-    var getTwo = documentManager.getOneUser(users[1].firstname);
+    var getAllUsers = documentManager.getAllUsers();
 
-    expect(noRole).toEqual('user must have a role');
-    expect(getOne.role).toBeDefined();
-    expect(getOne.role).toEqual('admin');
-    expect(getTwo.role).toBeDefined();
-    expect(getTwoe.role).toEqual('moderator');
+    getAllUsers.then(function(users) {
 
-    done();
+      userList = response(users);
+      expect(noRole).toEqual('Invalid role');
+      expect(userList[0].role).toBeDefined();
+      expect(userList[0].role).toEqual('admin');
+      expect(userList[1].role).toBeDefined();
+      expect(userList[1].role).toEqual('moderator');
+      done();
+
+    });
   });
 
   xit('has both first and last name', function(done) {
@@ -63,32 +77,37 @@ describe('User', function() {
     var noFirst = documentManager.createUser('Simon', undefined, 'regular');
     var noLast = documentManager.createUser(undefined, 'John', 'regular');
     var getOne = documentManager.getOneUser(users[0].firstname);
-    var getTwo = documentManager.getOneUser(users[1].lastname);
 
-    expect(noRole).toEqual('please provide a firstname');
-    expect(noRole).toEqual('please provide a lastname');
-    expect(getOne.lastname).toBeDefined();
-    expect(getOne.lastname).toEqual('Adewale');
-    expect(getTwo.firstname).toBeDefined();
-    expect(getTwo.firstname).toEqual('John');
+    getOne.then(function(user) {
+      var theUser = response(user);
+      expect(noFirst).toEqual('Invalid, firstname or lastname');
+      expect(noLast).toEqual('Invalid, firstname or lastname');
+      expect(theUser[0].lastname).toBeDefined();
+      expect(theUser[0].lastname).toEqual('Adewale');
+      expect(theUser[0].firstname).toBeDefined();
+      expect(theUser[0].firstname).toEqual('Ore');
+      done();
+    });
 
-    done();
   });
 
   xit(' request for all return all users', function(done) {
 
-    var getAllUsers = documentManager.getAllUsers(function(users) {
-      return users;
+    var getAllUsers = documentManager.getAllUsers();
+
+    getAllUsers.then(function(users) {
+
+      var userList = response(users);
+      expect(userList).toBeDefined();
+      expect(userList[0].firstname).toEqual('Ore');
+      expect(userList[1].firstname).toEqual('John');
+      expect(userList[2].lasttname).toEqual('Michael');
+      expect(userList[3].lastname).toEqual('Messi');
+      expect(userList[4].role).toEqual('regular');
+      expect(userList[0].role).toEqual('admin');
+      done();
     });
 
-    expect(getAllUsers).toBeDefined();
-    expect(getAllUsers[0].firstname).toEqual('Ore');
-    expect(getAllUsers[1].firstname).toEqual('John');
-    expect(getAllUsers[2].lasttname).toEqual('Michael');
-    expect(getAllUsers[3].lastname).toEqual('Messi');
-    expect(getAllUsers[4].role).toEqual('regular');
-    expect(getAllUsers[1].role).toEqual('admin');
-    done();
   });
 
 });
@@ -113,7 +132,7 @@ describe('Role', function() {
     done();
   });
 
-  xit('has a unique title', function(done) {
+  it('has a unique title', function(done) {
 
 
     documentManager.roleModel.create({
@@ -130,14 +149,17 @@ describe('Role', function() {
 
     var allRoles = documentManager.getAllRoles();
 
-    console.log(allRoles);
-    
-    expect(allRoles).toBeDefined();
-    expect(typeof allRoles).toEqual(typeof JSON);
-    expect(allRoles[0].title).toEqual('admin');
-    expect(allRoles[1].title).toEqual('regular');
-    expect(allRoles[0].title).toEqual('moderator');
-    done();
+
+    allRoles.then(function(roles) {
+      var roleList = response(roles);
+      expect(roleList).toBeDefined();
+      expect(typeof roleList).toEqual(typeof JSON);
+      expect(roleList[0].title).toEqual('admin');
+      expect(roleList[1].title).toEqual('regular');
+      expect(roleList[2].title).toEqual('moderator');
+      done();
+    });
+
   });
 
 });
@@ -163,42 +185,44 @@ describe('Document', function() {
     done();
   });
 
-  xit(' getAllDocuments should return all documents limited by a specified number', function(done) {
+  it(' getAllDocuments should return all documents limited by a specified number', function(done) {
 
     var documents = documentManager.getAllDocuments(2);
 
-    expect(documents).toBeDefined();
-    expect(documents.length).toEqual(2);
-    expect(documents[0].contents).toEqual('This is for the fans');
-    expect(getAllUsers[1].permitted).toEqual('moderator');
-
-    console.log(documents);
-
-    done();
+    documents.then(function(docs) {
+      docList = response(docs);
+      expect(docList).toBeDefined();
+      expect(docList.length).toEqual(2);
+      expect(docList[0].content).toEqual('This is for the fans');
+      expect(docList[1].permitted).toEqual('moderator');
+      done();
+    });
   });
 
-  xit(' getAllDocuments should return all documents in order of their published dates', function() {
+  it(' getAllDocuments should return all documents in order of their published dates', function(done) {
 
     var documents = documentManager.getAllDocuments(4);
 
     var createDate = new Date();
 
-    var year = dateValue.getFullYear(),
-      month = dateValue.getMonth() + 1,
-      day = dateValue.getDay() + 4;
+    var year = createDate.getFullYear(),
+      month = createDate.getMonth() + 1,
+      day = createDate.getDate();
     var date = year + '-' + month + '-' + day;
 
-    expect(documents).toBeDefined();
-    expect(documents.length).toEqual(4);
-    expect(documents[0].dateCreated).toEqual(date);
-    expect(documents[1].dateCreated).toEqual(date);
-    expect(documents[2].dateCreated).toEqual(date);
-    expect(documents[3].dateCreated).toEqual(date);
-    expect(documents[3].permitted).toEqual('admin');
+    documents.then(function(docs) {
+      docList = response(docs);
+      expect(docList).toBeDefined();
+      expect(docList.length).toEqual(4);
+      expect(docList[0].dateCreated).toEqual(date);
+      expect(docList[1].dateCreated).toEqual(date);
+      expect(docList[2].dateCreated).toEqual(date);
+      expect(docList[3].dateCreated).toEqual(date);
+      expect(docList[3].permitted).toEqual('admin');
 
-    console.log(documents);
+      done();
+    });
 
-    done();
   });
 
 });
@@ -225,31 +249,43 @@ describe('Search', function() {
     done();
   });
 
-  xit('getAllDocumentsByRole should return documents that can be accessed by that role', function() {
+  it('getAllDocumentsByRole should return documents that can be accessed by that role', function(done) {
 
     var documents = documentManager.getAllDocumentsByRole('regular', 2);
 
-    expect(documents).toBeDefined();
-    expect(documents.length).toEqual(2);
-    expect(documents[0].contents).toEqual('This is for the fans');
-    expect(getAllUsers[1].contents).toEqual('This is owned by the footballer');
-    expect(documents[0].permitted).toEqual('regular');
-    expect(getAllUsers[1].permitted).toEqual('regular');
+    documents.then(function(docs) {
 
-    done();
+      docList = response(docs);
+
+      expect(docList).toBeDefined();
+      expect(docList.length).toEqual(2);
+      expect(docList[0].content).toEqual('This is for the fans');
+      expect(docList[1].content).toEqual('This is owned by the footballer');
+      expect(docList[0].permitted).toEqual('regular');
+      expect(docList[1].permitted).toEqual('regular');
+
+      done();
+    });
   });
 
-  xit(' getAllDocumentByDate should return documents published on the specified date', function() {
+  it(' getAllDocumentByDate should return documents published on the specified date', function(done) {
 
-    var documents = documentManager.getAllDocumentsByDate(Date.now, 3);
+    var date = new Date();
+    var documents = documentManager.getAllDocumentsByDate(date, 3);
 
-    expect(documents).toBeDefined();
-    expect(documents.length).toEqual(4);
-    expect(documents[0].contents).toEqual('This is for the fans');
-    expect(documents[1].contents).toEqual('This belongs to the artist');
-    expect(getAllUsers[2].contents).toEqual('This is owned by the footballer');
-    expect(documents[0].permitted).toEqual('regular');
-    expect(getAllUsers[1].permitted).toEqual('moderator');
+    documents.then(function(docs) {
+
+      docList = response(docs);
+      console.log(docList);
+      expect(docList).toBeDefined();
+      expect(docList.length).toEqual(3);
+      expect(docList[0].content).toEqual('This is for the fans');
+      expect(docList[1].content).toEqual('This belongs to the artist');
+      expect(docList[2].content).toEqual('This is owned by the footballer');
+      expect(docList[0].permitted).toEqual('regular');
+      expect(docList[1].permitted).toEqual('moderator');
+      done();
+    });
+
   });
-
 });
