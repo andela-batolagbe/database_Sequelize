@@ -1,0 +1,41 @@
+[{
+  "Users": [{
+    "firstname": "Ore",
+    "lastname": "Adewale",
+    "role": "admin"
+  }, {
+    "firstname": "John",
+    "lastname": "Legend",
+    "role": "moderator"
+  }, {
+    "firstname": "Shawn",
+    "lastname": "Michael",
+    "role": "regular"
+  }, {
+    "firstname": "Lionel",
+    "lastname": "Messi",
+    "role": "regular"
+  }, {
+    "firstname": "Michael",
+    "lastname": "Johnson",
+    "role": "regular"
+  }],
+  "Roles": ["admin", "regular", "moderator"],
+
+  "Documents": [{
+      "contents": "This is for the fans",
+      "permitted": "regular"
+    }, {
+      "contents": "This belong to the artist",
+      "permitted": "moderator"
+    }, {
+      "contents": "This is owned by the footballer",
+      "permitted": "regular"
+    }, {
+      "contents": "The admin own this file",
+      "permitted": "admin"
+    }
+
+  ]
+
+}]
