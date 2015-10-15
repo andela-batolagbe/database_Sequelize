@@ -1,6 +1,7 @@
 var fs = require('fs');
 
 var documentManager = require('../src/documentManager');
+var models = require('../src/schema');
 
 var data = fs.readFileSync(__dirname + '/fixtures.json');
 
@@ -29,10 +30,10 @@ describe('User', function() {
 
   beforeEach(function(done) {
 
-  	documentManager.dropUser();
+    documentManager.dropUser();
     documentManager.dropDocument();
     documentManager.dropRole();
-    
+
     for (var user in users) {
       documentManager
         .createUser(users[user]
@@ -51,16 +52,15 @@ describe('User', function() {
 
   it('is unique', function(done) {
 
-    documentManager
-      .userModel.create({
-        firstname: users[0].firstname,
-        lastname: users[0].lastname,
-        role: users[0].role
-      }).catch(function(err) {
-        expect(err).toBeDefined();
-        expect(err.hasOwnProperty('errors')).toEqual(true);
-        expect(err.errors[0].type).toEqual('unique violation');
-      });
+    models.User.create({
+      firstname: users[0].firstname,
+      lastname: users[0].lastname,
+      role: users[0].role
+    }).catch(function(err) {
+      expect(err).toBeDefined();
+      expect(err.hasOwnProperty('errors')).toEqual(true);
+      expect(err.errors[0].type).toEqual('unique violation');
+    });
     done();
   });
 
@@ -134,7 +134,7 @@ describe('Role', function() {
     documentManager.dropUser();
     documentManager.dropDocument();
     documentManager.dropRole();
-    
+
     for (var role in roles) {
       documentManager.addRole(roles[role]);
     }
@@ -152,7 +152,7 @@ describe('Role', function() {
   it('has a unique title', function(done) {
 
 
-    documentManager.roleModel.create({
+    models.Role.create({
       title: roles[0]
     }).catch(function(err) {
       expect(err).toBeDefined();
@@ -190,7 +190,7 @@ describe('Document', function() {
 
   beforeEach(function(done) {
 
-  	documentManager.dropUser();
+    documentManager.dropUser();
     documentManager.dropDocument();
     documentManager.dropRole();
 
@@ -231,7 +231,7 @@ describe('Document', function() {
 
     var year = createDate.getFullYear(),
       month = createDate.getMonth() + 1,
-      day = createDate.getDate();
+      day = createDate.getDate() - 1;
     var date = year + '-' + month + '-' + day;
 
     documents.then(function(docs) {
@@ -259,7 +259,7 @@ describe('Search', function() {
 
   beforeEach(function(done) {
 
-  	documentManager.dropUser();
+    documentManager.dropUser();
     documentManager.dropDocument();
     documentManager.dropRole();
 
