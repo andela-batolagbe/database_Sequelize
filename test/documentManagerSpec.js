@@ -23,6 +23,10 @@ describe('User', function() {
 
   beforeEach(function(done) {
 
+  	documentManager.dropUser();
+    documentManager.dropDocument();
+    documentManager.dropRole();
+    
     for (var user in users) {
       documentManager
         .createUser(users[user]
@@ -72,26 +76,28 @@ describe('User', function() {
     });
   });
 
-  xit('has both first and last name', function(done) {
+  it('has both first and last name', function(done) {
 
     var noFirst = documentManager.createUser('Simon', undefined, 'regular');
     var noLast = documentManager.createUser(undefined, 'John', 'regular');
     var getOne = documentManager.getOneUser(users[0].firstname);
 
     getOne.then(function(user) {
+      console.log(noFirst);
       var theUser = response(user);
+
       expect(noFirst).toEqual('Invalid, firstname or lastname');
       expect(noLast).toEqual('Invalid, firstname or lastname');
-      expect(theUser[0].lastname).toBeDefined();
-      expect(theUser[0].lastname).toEqual('Adewale');
-      expect(theUser[0].firstname).toBeDefined();
-      expect(theUser[0].firstname).toEqual('Ore');
+      expect(user.dataValues.lastname).toBeDefined();
+      expect(user.dataValues.lastname).toEqual('Adewale');
+      expect(user.dataValues.firstname).toBeDefined();
+      expect(user.dataValues.firstname).toEqual('Ore');
       done();
     });
 
   });
 
-  xit(' request for all return all users', function(done) {
+  it(' request for all return all users', function(done) {
 
     var getAllUsers = documentManager.getAllUsers();
 
@@ -101,7 +107,7 @@ describe('User', function() {
       expect(userList).toBeDefined();
       expect(userList[0].firstname).toEqual('Ore');
       expect(userList[1].firstname).toEqual('John');
-      expect(userList[2].lasttname).toEqual('Michael');
+      expect(userList[2].lastname).toEqual('Michael');
       expect(userList[3].lastname).toEqual('Messi');
       expect(userList[4].role).toEqual('regular');
       expect(userList[0].role).toEqual('admin');
@@ -118,6 +124,10 @@ describe('Role', function() {
 
   beforeEach(function(done) {
 
+    documentManager.dropUser();
+    documentManager.dropDocument();
+    documentManager.dropRole();
+    
     for (var role in roles) {
       documentManager.addRole(roles[role]);
     }
@@ -151,12 +161,13 @@ describe('Role', function() {
 
 
     allRoles.then(function(roles) {
+
       var roleList = response(roles);
       expect(roleList).toBeDefined();
       expect(typeof roleList).toEqual(typeof JSON);
       expect(roleList[0].title).toEqual('admin');
-      expect(roleList[1].title).toEqual('regular');
-      expect(roleList[2].title).toEqual('moderator');
+      expect(roleList[1].title).toEqual('moderator');
+      expect(roleList[2].title).toEqual('regular');
       done();
     });
 
@@ -170,6 +181,10 @@ describe('Document', function() {
   var roles = testData[0].Roles;
 
   beforeEach(function(done) {
+
+  	documentManager.dropUser();
+    documentManager.dropDocument();
+    documentManager.dropRole();
 
     for (var doc in documents) {
       documentManager.createDocument(documents[doc].contents, documents[doc].permitted);
@@ -235,6 +250,10 @@ describe('Search', function() {
 
   beforeEach(function(done) {
 
+  	documentManager.dropUser();
+    documentManager.dropDocument();
+    documentManager.dropRole();
+
     for (var doc in documents) {
       documentManager.createDocument(documents[doc].contents, documents[doc].permitted);
     }
@@ -276,7 +295,7 @@ describe('Search', function() {
     documents.then(function(docs) {
 
       docList = response(docs);
-      console.log(docList);
+
       expect(docList).toBeDefined();
       expect(docList.length).toEqual(3);
       expect(docList[0].content).toEqual('This is for the fans');
