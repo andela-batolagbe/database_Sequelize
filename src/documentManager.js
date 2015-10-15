@@ -1,80 +1,4 @@
-var Sequelize = require('sequelize');
-
-//database connection definition, the mysql server was started using MAMP App
-var sequelize = new Sequelize('test_Database', 'root', 'testing', {
-  dialect: 'mysql',
-  dialectOptions: {
-    socketPath: '/Applications/MAMP/tmp/mysql/mysql.sock'
-  }
-});
-
-//user model definition
-var User = sequelize.define('User', {
-  firstname: {
-    type: Sequelize.STRING,
-    allowNull: false,
-    // unique: true
-  },
-  lastname: {
-    type: Sequelize.STRING,
-    allowNull: false
-  },
-  role: {
-    type: Sequelize.STRING,
-    allowNull: false
-  }
-});
-
-//role model definition
-var Role = sequelize.define('Role', {
-  title: {
-    type: Sequelize.STRING,
-    allowNull: false,
-    unique: true
-  }
-});
-
-//document model definition
-var Document = sequelize.define('Document', {
-  content: {
-    type: Sequelize.TEXT,
-    allowNull: false,
-  },
-  permitted: {
-    type: Sequelize.STRING,
-    allowNull: false
-  },
-  // created_by: {
-  //   type: Sequelize.STRING
-  // },
-
-  dateCreated: {
-    type: Sequelize.STRING
-  }
-
-});
-
-//model associations
-// Document.belongsTo(User, {
-//   targetKey: 'firstname',
-//   foreignKey: 'created_by'
-// });
-
-User.belongsTo(Role, {
-  targetKey: 'title',
-  foreignKey: 'role'
-});
-
-Document.belongsTo(Role, {
-  targetKey: 'title',
-  foreignKey: 'permitted'
-});
-sequelize.sync();
-
-//export models as [model]Model
-exports.userModel = User;
-exports.roleModel = Role;
-exports.documentModel = Document;
+var models = require('./schema');
 
 /**
  * [function to create new user]
@@ -86,29 +10,27 @@ exports.documentModel = Document;
 exports.createUser = function(first, last, role) {
   if (!role) {
     return "Invalid role";
+  } else if (!first || !last) {
+    return "Invalid, firstname or lastname";
   } else {
-    Role.findOrCreate({
+    models.Role.findOrCreate({
       where: {
         title: role
       }
     }).then(function() {
-      User.findOne({
+      models.User.findOne({
         where: {
           firstname: first,
           lastname: last
         }
       }).then(function(user) {
         if (!user) {
-          if (!first || !last) {
-            return "Invalid, firstname or lastname";
-          } else {
-            User.create({
-              firstname: first,
-              lastname: last,
-              role: role
-            });
-            return 'User created';
-          }
+          models.User.create({
+            firstname: first,
+            lastname: last,
+            role: role
+          });
+          return 'User created';
         } else {
           return "User already exist";
         }
@@ -123,7 +45,7 @@ exports.createUser = function(first, last, role) {
  */
 exports.getAllUsers = function(callback) {
 
-  return User.findAll();
+  return models.User.findAll();
 
 };
 
@@ -137,7 +59,7 @@ exports.getAllUsers = function(callback) {
 exports.getOneUser = function(name) {
   var theUser,
     nameList = name.split(' ');
-  return User.findOne({
+  return models.User.findOne({
     where: {
       $or: [{
         firstname: name
@@ -162,7 +84,7 @@ exports.getOneUser = function(name) {
  * return {string}  [confirmation message if succesful]
  */
 exports.addRole = function(role) {
-  Role.create({
+  models.Role.create({
     title: role
   }).then(function() {
     return 'Role added';
@@ -177,7 +99,7 @@ exports.addRole = function(role) {
  */
 
 exports.getAllRoles = function() {
-  return Role.findAll();
+  return models.Role.findAll();
 
 };
 
@@ -189,7 +111,7 @@ exports.getAllRoles = function() {
  */
 exports.getAllDocuments = function(limit, res) {
 
-  return Document.findAll({
+  return models.Document.findAll({
     order: '"createdAt" DESC',
     limit: limit,
     attributes: ['content', 'permitted', 'dateCreated'],
@@ -214,13 +136,13 @@ exports.createDocument = function(content, authorizedViewer) {
     day = createDate.getDate();
   var date = year + '-' + month + '-' + day;
 
-  Role.findOrCreate({
+  models.Role.findOrCreate({
     where: {
       title: authorizedViewer
     }
   }).then(function(user) {
 
-    Document.create({
+    models.Document.create({
       content: content,
       permitted: authorizedViewer,
       dateCreated: date
@@ -240,7 +162,7 @@ exports.createDocument = function(content, authorizedViewer) {
  * @return {[JSON]}      [list of documents that can be accessed by that role]
  */
 exports.getAllDocumentsByRole = function(role, limit) {
-  return Document.findAll({
+  return models.Document.findAll({
     where: {
       permitted: role
     },
@@ -266,7 +188,8 @@ exports.getAllDocumentsByDate = function(date, limit) {
     month = dateValue.getMonth() + 1,
     day = dateValue.getDate();
   var actualDate = year + '-' + month + '-' + day;
-  return Document.findAll({
+
+  return models.Document.findAll({
     where: {
       dateCreated: actualDate
     },
@@ -283,10 +206,10 @@ exports.getAllDocumentsByDate = function(date, limit) {
  * @return {no return} 
  */
 exports.dropUser = function() {
-  User.findAll()
+  models.User.findAll()
     .then(function(users) {
       for (var user in users) {
-        User.destroy({
+        models.User.destroy({
           where: {
             firstname: users[user].dataValue.firstname
           }
@@ -300,10 +223,10 @@ exports.dropUser = function() {
 
 
 exports.dropRole = function() {
-  Role.findAll()
+  models.Role.findAll()
     .then(function(roles) {
       for (var role in roles) {
-        Role.destroy({
+        models.Role.destroy({
           where: {
             title: roles[role].dataValue.title
           }
@@ -316,10 +239,10 @@ exports.dropRole = function() {
 };
 
 exports.dropDocument = function() {
-  Document.findAll()
+  models.Document.findAll()
     .then(function(docs) {
       for (var doc in docs) {
-        Document.destroy({
+        models.Document.destroy({
           where: {
             content: docs[doc].dataValue.content
           }
@@ -330,8 +253,3 @@ exports.dropDocument = function() {
     });
 
 };
-
-//exports.dropRole();
-//exports.getOneUser('Sheyman');
-//exports.createUser('John', 'Sheyman', 'regular');
-//exports.createDocument('sweet potato', 'admin');
