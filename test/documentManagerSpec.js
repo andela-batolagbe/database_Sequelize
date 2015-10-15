@@ -6,6 +6,12 @@ var data = fs.readFileSync(__dirname + '/fixtures.json');
 
 var testData = JSON.parse(data);
 
+
+/**
+ * [fuction to extract data values from response]
+ * @param  {[JSON]} data [returned data]
+ * @return {[JSON]}      [extracted values]
+ */
 var response = function(data) {
   var dataList = [];
   dataNum = data.length;
@@ -16,7 +22,7 @@ var response = function(data) {
   return dataList;
 };
 
-
+//user table tests
 describe('User', function() {
 
   var users = testData[0].Users;
@@ -118,6 +124,7 @@ describe('User', function() {
 
 });
 
+//role table tests
 describe('Role', function() {
 
   var roles = testData[0].Roles;
@@ -175,6 +182,7 @@ describe('Role', function() {
 
 });
 
+//user document tests
 describe('Document', function() {
 
   var documents = testData[0].Documents;
@@ -218,6 +226,7 @@ describe('Document', function() {
 
     var documents = documentManager.getAllDocuments(4);
 
+    //generate date to be used for evaluating results
     var createDate = new Date();
 
     var year = createDate.getFullYear(),
@@ -289,7 +298,9 @@ describe('Search', function() {
 
   it(' getAllDocumentByDate should return documents published on the specified date', function(done) {
 
+    //generate date to be passed as an argument
     var date = new Date();
+
     var documents = documentManager.getAllDocumentsByDate(date, 3);
 
     documents.then(function(docs) {
