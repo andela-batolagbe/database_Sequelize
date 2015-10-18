@@ -2,6 +2,7 @@
   "name": "database_Sequelize",
   "version": "0.0.0",
   "scripts": {
+    "start": "node ./src/openTerminal.js",
     "test": "jasmine-node test/documentManagerSpec.js --captureExceptions --forceexit"
   },
   "dependencies": {
